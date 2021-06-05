@@ -3,34 +3,46 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/reclaro/cep/validators"
 	"os"
+	"strings"
+
+	"github.com/reclaro/cep/expressions"
+	"github.com/reclaro/cep/parsers"
+	"github.com/reclaro/cep/printers"
 )
 
 /*
-   * any value
-   , value list separtor
-   - range of values
-   / step values
-   First is minute:  allowedValues 0-59
-   Second is hour:  allowed values 0-23
-   Third is day of the month: allowed values 1-31
-   Fourth is month: allowed Values 1-12 JAN-DEC
-   Fifth day of the week: allowed Values 0-6 SUN-SAT
+This script parses a cron string and expands each field to show the times at which it will run
 */
-
 func main() {
 	flag.Parse()
-	// TODO Check that we have a single string
-	cmd := flag.Args()[0]
 
-	fmt.Println("Cron string:", cmd)
-	// TODO the validator can return a struct with the different tokens and be a single
-	// struct with the fields and the parsing logic
-	v := validators.NewDefaultSyntax(cmd)
-	err := v.ValidateInput()
+	if len(flag.Args()) > 1 {
+		fmt.Println("The program accept only a single parameter as input string")
+		os.Exit(1)
+	}
+
+	cmd := flag.Args()[0]
+	if strings.Contains(cmd, "\n") {
+		fmt.Println("The input string needs to be on a single line")
+		os.Exit(1)
+	}
+
+	// we instantiate the expression holder that is responsible for checking the correctness of the cron expression string
+	expressionHolder, err := expressions.NewDefaultSyntax(cmd)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
+
+	// We instantiate the parser that is responsbile for parsing the string and expands all the fields
+	p, err := parsers.NewDefaultParser(expressionHolder)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
+	// We instantiate the printer that prints out the results based on a specific format/template
+	prt := printers.NewSimple()
+	prt.Print(p.Results())
 }

@@ -1,0 +1,9 @@
+FROM golang:1.13
+
+WORKDIR /go/src/cep
+COPY . .
+RUN go get -d -d ./...
+RUN go install -v ./...
+RUN go test ./...
+
+ENTRYPOINT ["cep"]
