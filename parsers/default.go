@@ -30,7 +30,7 @@ type Parser interface {
 	Months() ([]int, error)
 	DaysOfTheWeek() ([]int, error)
 	Command() (string, error)
-	Results() *CronResults
+	Results() (*CronResults, error)
 }
 
 /* DefaultParser implements the Parser interface. The default parser follows the following rules
@@ -200,16 +200,35 @@ func (dp *DefaultParser) manageSteps(input []string, allowedValues []int) ([]int
 
 // generateResults is the internal method to return the results if they are already available
 // or it generate all the results for all the expected fields.
-func (dp *DefaultParser) generateResults() {
+func (dp *DefaultParser) generateResults() error {
 	if dp.results == nil {
 		dp.results = &CronResults{}
 	}
-	dp.Minutes()
-	dp.Hours()
-	dp.DaysOfTheMonth()
-	dp.DaysOfTheWeek()
-	dp.Months()
-	dp.Command()
+	_, err := dp.Minutes()
+	if err != nil {
+		return err
+	}
+	_, err = dp.Hours()
+	if err != nil {
+		return err
+	}
+	_, err = dp.DaysOfTheMonth()
+	if err != nil {
+		return err
+	}
+	_, err = dp.DaysOfTheWeek()
+	if err != nil {
+		return err
+	}
+	_, err = dp.Months()
+	if err != nil {
+		return err
+	}
+	_, err = dp.Command()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Minutes return the list of values for minutes or an error
@@ -352,11 +371,14 @@ func (dp *DefaultParser) Command() (string, error) {
 
 // Results return the CronResults struct that contains the results of the parsing of a valid
 // cron expression
-func (dp *DefaultParser) Results() *CronResults {
+func (dp *DefaultParser) Results() (*CronResults, error) {
 	if dp.results == nil {
-		dp.generateResults()
+		err := dp.generateResults()
+		if err != nil {
+			return nil, err
+		}
 	}
-	return dp.results
+	return dp.results, nil
 }
 
 /*

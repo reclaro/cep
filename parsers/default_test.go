@@ -21,6 +21,17 @@ func defaultParserWithDefaultHolder(t *testing.T) *DefaultParser {
 	return dp
 }
 
+func defaultParserWithDefaultHolderWithString(t *testing.T, input string) *DefaultParser {
+
+	holder, e := expressions.NewDefaultSyntax(input)
+	assert.Nil(t, e)
+	p, e := NewDefaultParser(holder)
+	dp, ok := p.(*DefaultParser)
+	require.True(t, ok)
+	assert.Nil(t, e)
+	return dp
+}
+
 func TestParseAllValues(t *testing.T) {
 	dp := defaultParserWithDefaultHolder(t)
 	allValues := []int{0, 59}
@@ -286,8 +297,39 @@ func TestOutOfRangeValues(t *testing.T) {
 
 }
 
-func TestResults(t *testing.T) {
+func TestResultsValid(t *testing.T) {
 	dp := defaultParserWithDefaultHolder(t)
-	expected := dp.Results()
+	expected, err := dp.Results()
+	require.Nil(t, err)
 	assert.NotNil(t, expected)
+}
+
+func TestResultsInvalid(t *testing.T) {
+	// input := "*/15 0 1,15 * 99 /usr/bin/find"
+	// dp := defaultParserWithDefaultHolderWithString(t, input)
+	// expected, err := dp.Results()
+	// assert.NotNil(t, err)
+	// assert.Nil(t, expected)
+
+	tcs := []struct {
+		name  string
+		input string
+	}{
+		{"Invalid mins", "99 * * * * /usr/bin/find"},
+		{"Invalid hours", "* 99 * * * /usr/bin/find"},
+		{"Invalid days of month", "* * 99 * * /usr/bin/find"},
+		{"Invalid monts", "* * * 99 * /usr/bin/find"},
+		{"Invalid days of week", "* * * * 99 /usr/bin/find"},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+
+			dp := defaultParserWithDefaultHolderWithString(t, tc.input)
+			expected, err := dp.Results()
+			assert.NotNil(t, err)
+			assert.Nil(t, expected)
+
+		})
+	}
 }

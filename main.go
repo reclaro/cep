@@ -44,5 +44,10 @@ func main() {
 
 	// We instantiate the printer that prints out the results based on a specific format/template
 	prt := printers.NewSimple()
-	prt.Print(p.Results())
+	res, err := p.Results()
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	prt.Print(res)
 }
